@@ -5,7 +5,7 @@ export const appRouter = createTRPCRouter({
   invoke: baseProcedure
     .input(
       z.object({
-        email: z.string(),
+        value: z.string(),
       }),
     )
     .mutation(async ({ input }) => {
@@ -13,7 +13,7 @@ export const appRouter = createTRPCRouter({
         name: "app/task.created",
         data: {
           id: Math.random().toString(36).substring(2, 15),
-          email: input.email,
+          value: input.value,
         },
       });
       return { success: true };
