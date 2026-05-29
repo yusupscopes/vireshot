@@ -1,0 +1,15 @@
+# This is a config for E2B sandbox template.
+# You can use template ID or template name to create a sandbox:
+
+# Python SDK
+# from e2b import Sandbox, AsyncSandbox
+# sandbox = Sandbox.create("vire-nextjs-example") # Sync sandbox
+# sandbox = await AsyncSandbox.create("vire-nextjs-example") # Async sandbox
+
+# JS SDK
+# import { Sandbox } from 'e2b'
+# const sandbox = await Sandbox.create('vire-nextjs-example')
+
+start_cmd = "/compile_page.sh"
+dockerfile = "e2b.Dockerfile"
+template_name = "vire-nextjs-example"
