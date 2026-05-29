@@ -16,4 +16,4 @@ RUN npx --yes shadcn@4.8.0 init --yes -b radix -p nova
 RUN npx --yes shadcn@4.8.0 add --all --yes
 
 # Move the Nextjs app to the home directory and remove the nextjs-app directory
-RUN mv /home/user/nextjs-app/* /home/user/ && rm -rf /home/user/nextjs-app
+RUN cp -a /home/user/nextjs-app/. /home/user/ && rm -rf /home/user/nextjs-app
