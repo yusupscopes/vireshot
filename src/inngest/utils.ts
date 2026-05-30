@@ -23,12 +23,14 @@ export function lastAssistantTextMessageContent(message: AgentResult) {
   const lastMessageIndex = message.output.findLastIndex(
     (entry) => entry.role === "assistant",
   );
+  if (lastMessageIndex === -1) return undefined;
 
   const result = message.output[lastMessageIndex] as TextMessage | undefined;
+  if (!result?.content) return undefined;
 
-  return result?.content
-    ? typeof result.content === "string"
-      ? result.content
-      : result.content.map((part) => part.text).join("")
-    : undefined;
+  if (typeof result.content === "string") {
+    return result.content;
+  }
+
+  return result.content.map((part) => part.text).join("");
 }
