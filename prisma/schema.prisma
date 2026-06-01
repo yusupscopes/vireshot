@@ -29,6 +29,8 @@ model Message {
   role      MessageRole
   type      MessageType
   fragment  Fragment?
+  projectId String
+  project   Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
 }
@@ -42,4 +44,12 @@ model Fragment {
   files      Json
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+}
+
+model Project {
+  id        String    @id @default(uuid())
+  name      String
+  messages  Message[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }
