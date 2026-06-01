@@ -11,6 +11,7 @@ import { AgentState } from "./types";
 
 const messageEventSchema = z.object({
   value: z.string().min(1, "Message value must not be empty").max(4000),
+  projectId: z.string().min(1, "Project ID is required"),
 });
 
 export const processMessage = inngest.createFunction(
@@ -90,6 +91,7 @@ export const processMessage = inngest.createFunction(
       if (isError) {
         return await prisma.message.create({
           data: {
+            projectId: event.data.projectId,
             content: "Something went wrong. Please try again later.",
             role: "ASSISTANT",
             type: "ERROR",
@@ -99,6 +101,7 @@ export const processMessage = inngest.createFunction(
 
       return await prisma.message.create({
         data: {
+          projectId: event.data.projectId,
           content: result.state.data.summary,
           role: "ASSISTANT",
           type: "RESULT",
