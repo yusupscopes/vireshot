@@ -15,13 +15,10 @@ const Page = async ({ params }: Props) => {
   await queryClient.prefetchQuery(
     trpc.messages.getMany.queryOptions({ projectId }),
   );
-  await queryClient.prefetchQuery(
-    trpc.projects.getOne.queryOptions({ id: projectId }),
-  );
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <Suspense fallback={<div>Loading...</div>}>
+      <Suspense fallback={<div>Loading Project...</div>}>
         <ProjectView projectId={projectId} />
       </Suspense>
     </HydrationBoundary>
