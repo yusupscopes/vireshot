@@ -5,17 +5,14 @@ import z from "zod";
 import { toast } from "sonner";
 import { useState } from "react";
 import { ArrowUpIcon, Loader2Icon } from "lucide-react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { useTRPC } from "@/trpc/client";
 import { Button } from "@/components/ui/button";
 
 import {
   Field,
-  FieldDescription,
   FieldError,
-  FieldGroup,
-  FieldLabel,
 } from "@/components/ui/field";
 
 interface Props {
@@ -30,9 +27,6 @@ const formSchema = z.object({
 });
 
 export const MessageForm = ({ projectId }: Props) => {
-  const [isFocused, setIsFocused] = useState(false);
-  const showUsage = false;
-
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -40,8 +34,32 @@ export const MessageForm = ({ projectId }: Props) => {
     },
   });
 
+  const [isFocused, setIsFocused] = useState(false);
+  const queryClient = useQueryClient();
+  const trpc = useTRPC();
+  const createMessage = useMutation(
+    trpc.messages.create.mutationOptions({
+      onSuccess: () => {
+        form.reset();
+        queryClient.invalidateQueries(
+          trpc.messages.getMany.queryOptions({ projectId }),
+        );
+        // TODO: Invalidate usage status
+      },
+      onError: (error) => {
+        // TODO: Redirect to pricing page for specific error codes (if any)
+        toast.error(`Failed to create message: ${error.message}`);
+      },
+    }),
+  );
+  const isPending = createMessage.isPending;
+  const isButtonDisabled = isPending || !form.formState.isValid;
+
   const onSubmit = (data: z.infer<typeof formSchema>) => {
-    console.log(data);
+    createMessage.mutate({
+      value: data.prompt,
+      projectId,
+    });
   };
 
   return (
@@ -49,7 +67,6 @@ export const MessageForm = ({ projectId }: Props) => {
       className={cn(
         "relative border p-4 pt-1 rounded-xl bg-sidebar dark:bg-sidebar transition-all",
         isFocused && "shadow-xs",
-        showUsage && "rounded-t-none",
       )}
       onSubmit={form.handleSubmit(onSubmit)}
     >
@@ -60,6 +77,7 @@ export const MessageForm = ({ projectId }: Props) => {
           <Field data-invalid={fieldState.invalid}>
             <TextAreaAutosize
               {...field}
+              disabled={isPending}
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
               minRows={2}
@@ -85,8 +103,18 @@ export const MessageForm = ({ projectId }: Props) => {
           </kbd>
           &nbsp;to submit
         </div>
-        <Button className={cn("size-8 rounded-full")}>
-          <ArrowUpIcon />
+        <Button
+          disabled={isButtonDisabled}
+          className={cn(
+            "size-8 rounded-full",
+            isButtonDisabled && "bg-muted-foreground border",
+          )}
+        >
+          {isPending ? (
+            <Loader2Icon className="size-4 animate-spin" />
+          ) : (
+            <ArrowUpIcon />
+          )}
         </Button>
       </div>
     </form>
