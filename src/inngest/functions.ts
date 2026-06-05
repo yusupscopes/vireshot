@@ -35,7 +35,7 @@ export const processMessage = inngest.createFunction(
       description: "An expert coding agent.",
       system: PROMPT,
       model: openai({
-        model: "gpt-5",
+        model: "gpt-4.1",
         defaultParameters: {
           temperature: 0.1,
         },
@@ -116,13 +116,14 @@ export const processMessage = inngest.createFunction(
       });
     });
 
-    await step.run("cleanup-sandbox", async () => {
-      const sandbox = await getSandbox(sandboxId);
-      if (!sandbox) {
-        throw new Error(`Sandbox with ID ${sandboxId} not found`);
-      }
-      await sandbox.kill();
-    });
+    // TODO: We'll implement sandbox expire later, let the sandboxes live for now for easier debugging.
+    // await step.run("cleanup-sandbox", async () => {
+    //   const sandbox = await getSandbox(sandboxId);
+    //   if (!sandbox) {
+    //     throw new Error(`Sandbox with ID ${sandboxId} not found`);
+    //   }
+    //   await sandbox.kill();
+    // });
 
     return {
       url: sandboxUrl,
