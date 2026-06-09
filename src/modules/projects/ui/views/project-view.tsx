@@ -24,6 +24,7 @@ interface Props {
 export const ProjectView = ({ projectId }: Props) => {
   const [activeFragment, setActiveFragment] = useState<Fragment | null>(null);
   const [activeTab, setActiveTab] = useState<"preview" | "code">("preview");
+  const files = parseFileCollection(activeFragment?.files);
 
   return (
     <div className="h-screen">
@@ -72,11 +73,8 @@ export const ProjectView = ({ projectId }: Props) => {
             <TabsContent value="preview">
               {!!activeFragment && <FragmentWeb data={activeFragment} />}
             </TabsContent>
-            <TabsContent value="code">
-              {(() => {
-                const files = parseFileCollection(activeFragment?.files);
-                return files && <FileExplorer files={files} />;
-              })()}
+            <TabsContent value="code" className="min-h-0">
+              {files && <FileExplorer files={files} />}
             </TabsContent>
           </Tabs>
         </ResizablePanel>
