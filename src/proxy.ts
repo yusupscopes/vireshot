@@ -5,6 +5,10 @@ const isPublicRoute = createRouteMatcher([
   "/sign-up(.*)",
   "/",
   "/api/inngest(.*)",
+  // tRPC endpoints handle their own authentication via protectedProcedure.
+  // Listing them here lets Clerk skip its own redirect/protect logic so
+  // unauthenticated requests receive proper UNAUTHORIZED tRPC errors.
+  "/api/trpc(.*)",
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
