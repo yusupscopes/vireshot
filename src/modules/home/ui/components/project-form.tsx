@@ -44,6 +44,9 @@ export const ProjectForm = () => {
       onError: (error) => {
         // TODO: Redirect to pricing page for specific error codes (if any)
         toast.error(`Failed to create project: ${error.message}`);
+        if (error.data?.code === "UNAUTHORIZED") {
+          router.push("/sign-in");
+        }
       },
     }),
   );
