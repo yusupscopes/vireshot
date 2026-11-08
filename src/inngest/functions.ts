@@ -1,32 +1,74 @@
 import { Sandbox } from "@e2b/code-interpreter";
 import { openai, createAgent, createNetwork } from "@inngest/agent-kit";
+import { NonRetriableError } from "inngest";
 import { z } from "zod";
 
 import { inngest } from "./client";
 import { getSandbox, lastAssistantTextMessageContent } from "./utils";
 import { PROMPT } from "./prompt";
 import { createSandboxTools } from "./tools";
+import { MAX_PROMPT_LENGTH } from "@/lib/constants";
 import { prisma } from "@/lib/database";
 import { AgentState } from "./types";
 
 const messageEventSchema = z.object({
-  value: z.string().min(1, "Message value must not be empty").max(4000),
+  value: z
+    .string()
+    .min(1, "Message value must not be empty")
+    .max(MAX_PROMPT_LENGTH),
   projectId: z.string().min(1, "Project ID is required"),
 });
 
+// E2B's default is 5 minutes, which a 10-iteration agent run with package
+// installs can exceed. This also keeps the saved preview URL alive longer.
+const SANDBOX_TIMEOUT_MS = 15 * 60 * 1000;
+
+const FAILURE_MESSAGE = "Something went wrong. Please try again later.";
+
 export const processMessage = inngest.createFunction(
-  { id: "process-message", triggers: { event: "app/message.created" } },
+  {
+    id: "process-message",
+    triggers: { event: "app/message.created" },
+    // Runs once the function has exhausted its retries. Without it, a failed
+    // run never writes an assistant message and the chat shows its loading
+    // state forever.
+    onFailure: async ({ event, error, step }) => {
+      const projectId = z
+        .object({ projectId: z.string().min(1) })
+        .safeParse(event.data.event.data);
+      if (!projectId.success) {
+        console.error("process-message failed without a projectId:", error);
+        return;
+      }
+
+      await step.run("save-failure", async () => {
+        return await prisma.message.create({
+          data: {
+            projectId: projectId.data.projectId,
+            content: FAILURE_MESSAGE,
+            role: "ASSISTANT",
+            type: "ERROR",
+          },
+        });
+      });
+    },
+  },
   async ({ event, step }) => {
     const parsed = messageEventSchema.safeParse(event.data);
     if (!parsed.success) {
-      throw new Error(`Invalid message event: ${parsed.error.message}`);
+      // Retrying cannot fix a malformed event; fail straight to onFailure.
+      throw new NonRetriableError(
+        `Invalid message event: ${parsed.error.message}`,
+      );
     }
 
-    const { value: messageValue } = parsed.data;
+    const { value: messageValue, projectId } = parsed.data;
 
     const sandboxId = await step.run("create-sandbox", async () => {
       const template = process.env.E2B_TEMPLATE_NAME ?? "vire-nextjs-example";
-      const sandbox = await Sandbox.create(template);
+      const sandbox = await Sandbox.create(template, {
+        timeoutMs: SANDBOX_TIMEOUT_MS,
+      });
       return sandbox.sandboxId;
     });
 
@@ -91,8 +133,8 @@ export const processMessage = inngest.createFunction(
       if (isError) {
         return await prisma.message.create({
           data: {
-            projectId: event.data.projectId,
-            content: "Something went wrong. Please try again later.",
+            projectId,
+            content: FAILURE_MESSAGE,
             role: "ASSISTANT",
             type: "ERROR",
           },
@@ -101,7 +143,7 @@ export const processMessage = inngest.createFunction(
 
       return await prisma.message.create({
         data: {
-          projectId: event.data.projectId,
+          projectId,
           content: result.state.data.summary,
           role: "ASSISTANT",
           type: "RESULT",
