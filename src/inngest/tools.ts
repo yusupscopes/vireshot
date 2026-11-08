@@ -8,6 +8,7 @@ import {
   MAX_READ_RESPONSE_SIZE,
 } from "./utils";
 import { AgentState } from "./types";
+import { runSandboxCommand } from "./run-command";
 
 export function createSandboxTools(sandboxId: string) {
   return [
@@ -19,27 +20,12 @@ export function createSandboxTools(sandboxId: string) {
       }),
       handler: async ({ command }, { step }) => {
         return await step?.run("terminal", async () => {
-          const buffers = { stdout: "", stderr: "" };
-
           const sandbox = await getSandbox(sandboxId);
           if (!sandbox) {
             throw new Error(`Sandbox with ID ${sandboxId} not found`);
           }
 
-          const processCommand = await sandbox.commands.run(command, {
-            onStdout: (data: string) => {
-              buffers.stdout += data;
-            },
-            onStderr: (err: string) => {
-              buffers.stderr += err;
-            },
-          });
-
-          return {
-            stdout: buffers.stdout,
-            stderr: buffers.stderr,
-            exitCode: (processCommand as { exitCode?: number }).exitCode ?? 0,
-          };
+          return runSandboxCommand(sandbox, command);
         });
       },
     }),
