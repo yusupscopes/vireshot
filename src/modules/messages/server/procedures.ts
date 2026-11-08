@@ -3,6 +3,7 @@ import { prisma } from "@/lib/database";
 import { protectedProcedure, createTRPCRouter } from "@/trpc/init";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
+import { MAX_PROMPT_LENGTH } from "@/lib/constants";
 
 export const messagesRouter = createTRPCRouter({
   getMany: protectedProcedure
@@ -30,7 +31,10 @@ export const messagesRouter = createTRPCRouter({
   create: protectedProcedure
     .input(
       z.object({
-        value: z.string().min(1, { message: "Message is required" }),
+        value: z
+          .string()
+          .min(1, { message: "Message is required" })
+          .max(MAX_PROMPT_LENGTH, { message: "Message is too long" }),
         projectId: z.string().min(1, { message: "Project ID is required" }),
       }),
     )

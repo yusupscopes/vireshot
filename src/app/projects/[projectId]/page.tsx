@@ -12,9 +12,17 @@ interface Props {
 const Page = async ({ params }: Props) => {
   const { projectId } = await params;
   const queryClient = getQueryClient();
-  await queryClient.prefetchQuery(
-    trpc.messages.getMany.queryOptions({ projectId }),
-  );
+  // Prefetch every query the view reads with useSuspenseQuery. A query
+  // missing here runs during SSR through the HTTP link, which has no
+  // request cookies, so protected procedures fail with UNAUTHORIZED.
+  await Promise.all([
+    queryClient.prefetchQuery(
+      trpc.messages.getMany.queryOptions({ projectId }),
+    ),
+    queryClient.prefetchQuery(
+      trpc.projects.getOne.queryOptions({ id: projectId }),
+    ),
+  ]);
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>

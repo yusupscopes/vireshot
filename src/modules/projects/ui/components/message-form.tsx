@@ -7,6 +7,7 @@ import { useState } from "react";
 import { ArrowUpIcon, Loader2Icon } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
+import { MAX_PROMPT_LENGTH } from "@/lib/constants";
 import { useTRPC } from "@/trpc/client";
 import { Button } from "@/components/ui/button";
 
@@ -23,7 +24,9 @@ const formSchema = z.object({
   prompt: z
     .string()
     .min(1, { message: "Prompt is required" })
-    .max(4000, { message: "Prompt must be less than 4000 characters" }),
+    .max(MAX_PROMPT_LENGTH, {
+      message: `Prompt must be less than ${MAX_PROMPT_LENGTH} characters`,
+    }),
 });
 
 export const MessageForm = ({ projectId }: Props) => {

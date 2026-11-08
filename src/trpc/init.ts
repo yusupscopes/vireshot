@@ -24,7 +24,13 @@ const isAuthenticated = t.middleware(({ ctx, next }) => {
     throw new TRPCError({ code: "UNAUTHORIZED", message: "Unauthorized" });
   }
 
-  return next();
+  // Pass the narrowed auth on so procedures see `userId: string`, not
+  // `string | null`.
+  return next({
+    ctx: {
+      auth: { ...ctx.auth, userId: ctx.auth.userId },
+    },
+  });
 });
 
 // Base router and procedure helpers
