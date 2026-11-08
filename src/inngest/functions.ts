@@ -77,9 +77,9 @@ export const processMessage = inngest.createFunction(
       description: "An expert coding agent.",
       system: PROMPT,
       model: openai({
-        model: "gpt-4.1",
+        model: "gpt-5",
         defaultParameters: {
-          temperature: 0.1,
+          temperature: 1,
         },
       }),
       tools: createSandboxTools(sandboxId),
