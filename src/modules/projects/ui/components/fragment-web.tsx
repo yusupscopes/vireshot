@@ -78,7 +78,11 @@ export const FragmentWeb = ({ data }: Props) => {
           title="Fragment Web Preview"
           key={fragmentKey}
           className="h-full w-full"
-          sandbox="allow-forms allow-scripts"
+          // allow-same-origin lets generated apps use localStorage and cookies.
+          // It is safe only because the preview is served from the E2B host,
+          // a different origin from this app, so the frame cannot reach our
+          // DOM, cookies or storage.
+          sandbox="allow-forms allow-scripts allow-same-origin"
           loading="lazy"
           src={data.sandboxUrl}
         />
