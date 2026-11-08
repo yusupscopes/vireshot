@@ -4,6 +4,7 @@ import { protectedProcedure, createTRPCRouter } from "@/trpc/init";
 import { z } from "zod";
 import { generateSlug } from "random-word-slugs";
 import { TRPCError } from "@trpc/server";
+import { MAX_PROMPT_LENGTH } from "@/lib/constants";
 
 export const projectsRouter = createTRPCRouter({
   getOne: protectedProcedure
@@ -42,7 +43,10 @@ export const projectsRouter = createTRPCRouter({
   create: protectedProcedure
     .input(
       z.object({
-        prompt: z.string().min(1, { message: "Message is required" }),
+        prompt: z
+          .string()
+          .min(1, { message: "Message is required" })
+          .max(MAX_PROMPT_LENGTH, { message: "Message is too long" }),
       }),
     )
     .mutation(async ({ input, ctx }) => {
